@@ -1,0 +1,483 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Core JWT Security - Uçtan Uca Sistem & Mimari Rehberi</title>
+    <style>
+        :root {
+            --bg-body: #0b1120;
+            --bg-card: #1e293b;
+            --bg-card-hover: #24344d;
+            --bg-subtle: #162032;
+            --border: #334155;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary: #38bdf8;
+            --success: #34d399;
+            --warning: #fbbf24;
+            --danger: #f87171;
+            --purple: #c084fc;
+            --indigo: #818cf8;
+            --code-bg: #030712;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            line-height: 1.7;
+            padding: 3rem 1.5rem;
+        }
+
+        .container {
+            max-width: 1100px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3.5rem;
+            padding-bottom: 2.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .badge-main {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.12);
+            color: var(--primary);
+            padding: 0.4rem 1.1rem;
+            border-radius: 9999px;
+            font-size: 0.9rem;
+            font-weight: 700;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        header h1 {
+            font-size: 2.8rem;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.03em;
+            margin-bottom: 1rem;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            max-width: 750px;
+            margin: 0 auto;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            color: #fff;
+            margin: 2.5rem 0 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+        }
+
+        .card {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border);
+            border-radius: 16px;
+            padding: 2.2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.4);
+        }
+
+        /* Teknoloji Grid */
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-top: 1.2rem;
+        }
+
+        .tech-item {
+            background-color: var(--bg-subtle);
+            border: 1px solid var(--border);
+            border-radius: 12px;
+            padding: 1.25rem;
+        }
+
+        .tech-item h4 {
+            color: var(--primary);
+            font-size: 1.1rem;
+            margin-bottom: 0.4rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .tech-item p {
+            font-size: 0.92rem;
+            color: var(--text-muted);
+        }
+
+        /* Akış Şeması / Timeline */
+        .timeline {
+            position: relative;
+            padding-left: 2.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .timeline::before {
+            content: '';
+            position: absolute;
+            left: 0.85rem;
+            top: 0.5rem;
+            bottom: 0.5rem;
+            width: 3px;
+            background: linear-gradient(to bottom, var(--primary), var(--purple), var(--success));
+            border-radius: 999px;
+        }
+
+        .flow-step {
+            position: relative;
+            margin-bottom: 2rem;
+        }
+
+        .flow-step:last-child {
+            margin-bottom: 0;
+        }
+
+        .flow-step::before {
+            content: '';
+            position: absolute;
+            left: -2.05rem;
+            top: 0.35rem;
+            width: 14px;
+            height: 14px;
+            border-radius: 50%;
+            background-color: var(--bg-body);
+            border: 3px solid var(--primary);
+        }
+
+        .flow-step.purple::before { border-color: var(--purple); }
+        .flow-step.success::before { border-color: var(--success); }
+        .flow-step.warning::before { border-color: var(--warning); }
+
+        .flow-step h3 {
+            font-size: 1.25rem;
+            color: #fff;
+            margin-bottom: 0.4rem;
+        }
+
+        .flow-step p {
+            color: #cbd5e1;
+            font-size: 0.98rem;
+            margin-bottom: 0.6rem;
+        }
+
+        .code-box {
+            background-color: var(--code-bg);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 10px;
+            padding: 1rem 1.2rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+            font-size: 0.9rem;
+            color: #38bdf8;
+            margin: 0.6rem 0;
+            overflow-x: auto;
+        }
+
+        .code-box .comment {
+            color: #64748b;
+        }
+
+        .code-box .keyword {
+            color: #c084fc;
+        }
+
+        .code-box .string {
+            color: #34d399;
+        }
+
+        /* Karar Kutuları */
+        .decision-item {
+            border-left: 4px solid var(--primary);
+            background: rgba(56, 189, 248, 0.04);
+            padding: 1.25rem;
+            border-radius: 0 10px 10px 0;
+            margin-bottom: 1.25rem;
+        }
+
+        .decision-item.purple {
+            border-left-color: var(--purple);
+            background: rgba(192, 132, 252, 0.04);
+        }
+
+        .decision-item.success {
+            border-left-color: var(--success);
+            background: rgba(52, 211, 153, 0.04);
+        }
+
+        .decision-item h4 {
+            font-size: 1.15rem;
+            color: #fff;
+            margin-bottom: 0.35rem;
+        }
+
+        .decision-item p {
+            color: #cbd5e1;
+            font-size: 0.95rem;
+            margin: 0;
+        }
+
+        /* Tablo */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.2rem 0;
+            background-color: var(--code-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border);
+        }
+
+        th, td {
+            padding: 1rem 1.2rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border);
+            font-size: 0.95rem;
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--primary);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .badge-method {
+            display: inline-block;
+            padding: 0.2rem 0.6rem;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.78rem;
+        }
+
+        .post { background: rgba(56, 189, 248, 0.2); color: var(--primary); }
+        .get { background: rgba(52, 211, 153, 0.2); color: var(--success); }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <span class="badge-main">Mimari Referans Dokümantasyonu</span>
+        <h1>Core JWT Security Architecture</h1>
+        <p>Spring Boot 3/4, Spring Security, Modern JJWT (0.12.x) ve Refresh Token Rotation ile Uçtan Uca Güvenlik Mimarisi</p>
+    </header>
+
+    <!-- 1. KULLANILAN TEKNOLOJİLER -->
+    <div class="card">
+        <h2 class="section-title" style="margin-top: 0;">🛠️ Projede Neler Kullandık?</h2>
+        <p>Proje boyunca tercih edilen teknolojiler ve üstlendikleri kritik görevler:</p>
+
+        <div class="tech-grid">
+            <div class="tech-item">
+                <h4>☕ Java 21 & Records</h4>
+                <p>DTO'lar için immutable <code>record</code> yapıları, modern zaman API'si (<code>Instant</code>, <code>Duration</code>) ve Pattern Matching.</p>
+            </div>
+            <div class="tech-item">
+                <h4>🛡️ Spring Security 6/7</h4>
+                <p>Stateless session, CSRF kapalı, özel 401 & 403 Handler'lar ve <code>@EnableMethodSecurity</code> ile rol bazlı yetkilendirme.</p>
+            </div>
+            <div class="tech-item">
+                <h4>🔑 JJWT 0.12.6</h4>
+                <p>En güncel API: <code>verifyWith</code>, <code>parseSignedClaims</code>, <code>getPayload</code>. Deprecated metodlar tamamen kaldırıldı.</p>
+            </div>
+            <div class="tech-item">
+                <h4>⚡ Spring Data JPA & Hibernate</h4>
+                <p><code>@EntityGraph</code> ile N+1 ve Lazy çözümü, <code>@ElementCollection(EAGER)</code> ile rol yükleme güvenliği.</p>
+            </div>
+            <div class="tech-item">
+                <h4>🐘 PostgreSQL & Docker</h4>
+                <p>Docker Compose ile izole PostgreSQL veritabanı, <code>ddl-auto: create-drop</code> ile test dostu yapı.</p>
+            </div>
+            <div class="tech-item">
+                <h4>📦 Lombok</h4>
+                <p><code>@Getter</code>, <code>@Setter</code>, <code>@RequiredArgsConstructor</code>, <code>@Builder</code> ve <code>@Builder.Default</code> ile temiz kod.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. MİMARİ KARARLAR VE 'NEDEN'LERİ -->
+    <div class="card">
+        <h2 class="section-title" style="margin-top: 0;">🧠 Sektörel Mimari Kararlar ve Gerekçeleri</h2>
+
+        <div class="decision-item">
+            <h4>1. Sıfır Veritabanı Sorgusu (Zero-DB Hit) ile Filtreleme</h4>
+            <p><strong>Neden?</strong> Tutorial'larda her HTTP isteğinde veritabanına <code>loadUserByUsername</code> sorgusu atılır. Biz token claim'lerine rolleri gömdük ve filtrede tek bir parse ile <code>SecurityContext</code> kurduk. Bu sayede veritabanına her istekte `SELECT` atılmasını önleyerek gerçek bir <strong>stateless mikroservis performansı</strong> sağladık.</p>
+        </div>
+
+        <div class="decision-item purple">
+            <h4>2. Composition over Inheritance (CustomUserDetails Ayrımı)</h4>
+            <p><strong>Neden?</strong> <code>User</code> JPA entity'sine doğrudan <code>implements UserDetails</code> demedik. Domain entity'mizi framework bağımlılığından korumak için ayrı bir <code>CustomUserDetails</code> wrapper sınıfı yazdık.</p>
+        </div>
+
+        <div class="decision-item success">
+            <h4>3. Refresh Token Rotation (RTR - OWASP Standardı)</h4>
+            <p><strong>Neden?</strong> Saf access token'lar süre bitene kadar iptal edilemez. Refresh token'ı veritabanında opaque (<code>UUID</code>) olarak tuttuk ve her yenilemede eskisini silip yepyeni bir refresh token verdik. Böylece token hırsızlığı riski minimuma indi.</p>
+        </div>
+
+        <div class="decision-item">
+            <h4>4. JPA @EntityGraph Optimizasyonu</h4>
+            <p><strong>Neden?</strong> <code>RefreshToken</code> ile <code>User</code> ilişkisini güvenli olması için <code>LAZY</code> yaptık. Ancak token sorgularken <code>@EntityGraph(attributePaths = {"user"})</code> kullanarak tek bir SQL <code>JOIN</code> ile kullanıcıyı çektik; böylece hem <code>LazyInitializationException</code>'ı hem de N+1 problemini çözdük.</p>
+        </div>
+
+        <div class="decision-item purple">
+            <h4>5. REST API Uyumlu JSON Hata Yönetimi</h4>
+            <p><strong>Neden?</strong> Spring Security varsayılan olarak HTML yönlendirmesi yapar. Biz <code>AuthenticationEntryPoint</code> (401), <code>AccessDeniedHandler</code> (403), <code>BadCredentialsException</code> (401) ve <code>TokenNotFoundException</code> (401) ile istemciye daima standart JSON hata dökümleri döndük.</p>
+        </div>
+    </div>
+
+    <!-- 3. SİSTEMİN UÇTAN UCA AKIŞI -->
+    <div class="card">
+        <h2 class="section-title" style="margin-top: 0;">🔄 Sistemin Uçtan Uca Akışı (Step-by-Step)</h2>
+
+        <div class="timeline">
+            <!-- 1. REGISTER -->
+            <div class="flow-step">
+                <h3>1. Kullanıcı Kaydı (Registration Flow)</h3>
+                <p>İstemci <code>POST /api/auth/register</code> isteği atar.</p>
+                <div class="code-box">
+                    RegisterRequest(username, password, email) <br>
+                    &nbsp;&nbsp;↳ <strong>UserRepository:</strong> Kullanıcı adı var mı kontrolü (varsa 409 Conflict) <br>
+                    &nbsp;&nbsp;↳ <strong>BCryptPasswordEncoder:</strong> Şifre hash'lenir <br>
+                    &nbsp;&nbsp;↳ <strong>User & Role:</strong> Varsayılan Role.USER atanır ve DB'ye kaydedilir <br>
+                    &nbsp;&nbsp;↳ <strong>JwtService:</strong> 15 dakikalık Access Token üretilir <br>
+                    &nbsp;&nbsp;↳ <strong>RefreshTokenService:</strong> 7 günlük UUID Refresh Token üretilir ve DB'ye yazılır <br>
+                    &nbsp;&nbsp;↳ <strong>AuthResponse:</strong> { accessToken, refreshToken } dönülür.
+                </div>
+            </div>
+
+            <!-- 2. LOGIN -->
+            <div class="flow-step purple">
+                <h3>2. Kullanıcı Girişi (Login Flow)</h3>
+                <p>İstemci <code>POST /api/auth/login</code> isteği atar.</p>
+                <div class="code-box">
+                    LoginRequest(username, password) <br>
+                    &nbsp;&nbsp;↳ <strong>AuthenticationManager:</strong> kimlik doğrulamayı başlatır <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↳ <strong>CustomUserDetailsService:</strong> DB'den kullanıcıyı çeker ve CustomUserDetails döner <br>
+                    &nbsp;&nbsp;&nbsp;&nbsp;↳ <strong>PasswordEncoder:</strong> Hash eşleşmesini kontrol eder (yanlışsa 401 BadCredentials) <br>
+                    &nbsp;&nbsp;↳ <strong>Objects.requireNonNull(auth.getPrincipal()):</strong> Null-safety garantiye alınır <br>
+                    &nbsp;&nbsp;↳ <strong>Token Üretimi:</strong> Yeni Access Token ve Kullanıcının eski token'ı silinip yeni Refresh Token verilir.
+                </div>
+            </div>
+
+            <!-- 3. PROTECTED RESOURCE -->
+            <div class="flow-step success">
+                <h3>3. Korumalı Kaynaklara İstek (Zero-DB Hit Authentication)</h3>
+                <p>İstemci <code>GET /api/private/user</code> isteği atar ve Header ekler: <code>Authorization: Bearer &lt;accessToken&gt;</code>.</p>
+                <div class="code-box">
+                    <strong>JwtAuthenticationFilter:</strong> <br>
+                    &nbsp;&nbsp;↳ Header "Bearer " ile başlıyor mu? <br>
+                    &nbsp;&nbsp;↳ <strong>jwtService.extractAllClaims(token):</strong> Tek parse ile imza ve süre doğrulanır <br>
+                    &nbsp;&nbsp;↳ <strong>Claims'ten Okuma:</strong> Subject (username) ve "roles" claim'i alınır <br>
+                    &nbsp;&nbsp;↳ <strong>DB'ye HİÇ GİTMEDEN:</strong> User.withUsername(...).authorities(...) ile UserDetails üretilir <br>
+                    &nbsp;&nbsp;↳ <strong>SecurityContextHolder:</strong> Authentication nesnesi context'e konur <br>
+                    &nbsp;&nbsp;↳ <strong>@PreAuthorize("hasAnyRole('USER', 'ADMIN')"):</strong> Rol doğrulanır ve 200 OK yanıt döner!
+                </div>
+            </div>
+
+            <!-- 4. REFRESH TOKEN ROTATION -->
+            <div class="flow-step warning">
+                <h3>4. Token Yenileme (Refresh Token Rotation - RTR Flow)</h3>
+                <p>Access Token süresi (15 dk) bittiğinde istemci <code>POST /api/auth/refresh</code> isteği atar.</p>
+                <div class="code-box">
+                    RefreshTokenRequest(token: "&lt;UUID&gt;") <br>
+                    &nbsp;&nbsp;↳ <strong>RefreshTokenRepository:</strong> @EntityGraph ile User ile birlikte tek SQL JOIN ile bulunur <br>
+                    &nbsp;&nbsp;↳ <strong>verifyExpiration():</strong> Süresi dolmuş mu veya revoked mu? (Dolmuşsa silinir, 401 fırlar) <br>
+                    &nbsp;&nbsp;↳ <strong>Token Rotation (Kritik):</strong> Eski refresh token DB'den silinir (deleteByUser) <br>
+                    &nbsp;&nbsp;↳ <strong>Yeni Çift:</strong> Yeni Access Token + Yepyeni Refresh Token üretilir <br>
+                    &nbsp;&nbsp;↳ <strong>AuthResponse:</strong> { accessToken: "yeni...", refreshToken: "yepyeni..." } dönülür.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. ENDPOINT MATRİSİ -->
+    <div class="card">
+        <h2 class="section-title" style="margin-top: 0;">🌐 Endpoint & Yetki Tablosu</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Metot</th>
+                    <th>URL</th>
+                    <th>Yetki Seviyesi</th>
+                    <th>Hata Durumunda HTTP Kodu</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><span class="badge-method post">POST</span></td>
+                    <td><code>/api/auth/register</code></td>
+                    <td>Herkese Açık (permitAll)</td>
+                    <td>409 Conflict (Kullanıcı zaten varsa)</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-method post">POST</span></td>
+                    <td><code>/api/auth/login</code></td>
+                    <td>Herkese Açık (permitAll)</td>
+                    <td>401 Unauthorized (Hatalı şifre/kullanıcı)</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-method post">POST</span></td>
+                    <td><code>/api/auth/refresh</code></td>
+                    <td>Herkese Açık (permitAll)</td>
+                    <td>401 Unauthorized (Geçersiz/Süresi bitmiş token)</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-method get">GET</span></td>
+                    <td><code>/api/private</code></td>
+                    <td>Authenticated (Token Sahibi)</td>
+                    <td>401 Unauthorized (Token yoksa/hatalıysa)</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-method get">GET</span></td>
+                    <td><code>/api/private/user</code></td>
+                    <td><code>USER</code> veya <code>ADMIN</code></td>
+                    <td>401 (Token yoksa) / 403 (Rol uymuyorsa)</td>
+                </tr>
+                <tr>
+                    <td><span class="badge-method get">GET</span></td>
+                    <td><code>/api/private/admin</code></td>
+                    <td>Sadece <code>ADMIN</code></td>
+                    <td>403 Forbidden (USER rolü erişmeye kalkarsa)</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        <p>Core JWT Architecture Master Reference • Spring Boot 3/4 & Java 21 • 2026</p>
+    </footer>
+</div>
+
+</body>
+</html>
