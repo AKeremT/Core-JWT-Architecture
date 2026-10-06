@@ -2,9 +2,12 @@ package com.akt.security.jwt.security;
 
 import com.akt.security.jwt.dto.AuthResponse;
 import com.akt.security.jwt.dto.LoginRequest;
+import com.akt.security.jwt.dto.RefreshTokenRequest;
 import com.akt.security.jwt.dto.RegisterRequest;
+import com.akt.security.jwt.exception.TokenNotFoundException;
 import com.akt.security.jwt.exception.UserAlreadyExistsException;
 import com.akt.security.jwt.model.CustomUserDetails;
+import com.akt.security.jwt.model.RefreshToken;
 import com.akt.security.jwt.model.Role;
 import com.akt.security.jwt.model.User;
 import com.akt.security.jwt.repository.UserRepository;
@@ -13,7 +16,9 @@ import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Set;
 
 @Service
@@ -24,6 +29,7 @@ public class AuthenticationService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
+    private final RefreshTokenService refreshTokenService;
 
     public AuthResponse register(RegisterRequest registerRequest) {
 
@@ -41,7 +47,8 @@ public class AuthenticationService {
         User savedUser = userRepository.save(user);
 
         final String token = jwtService.generateToken(new CustomUserDetails(savedUser));
-        return new AuthResponse(token);
+        final RefreshToken refreshToken = refreshTokenService.getRefreshToken(savedUser);
+        return new AuthResponse(token, refreshToken.getToken());
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
@@ -49,10 +56,25 @@ public class AuthenticationService {
         var auth = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) auth.getPrincipal();
+        CustomUserDetails customUserDetails = (CustomUserDetails) Objects.requireNonNull(auth.getPrincipal());
 
         final String token = jwtService.generateToken(customUserDetails);
-        return new AuthResponse(token);
+        final RefreshToken refreshToken = refreshTokenService.getRefreshToken(customUserDetails.getUser());
+        return new AuthResponse(token, refreshToken.getToken());
+    }
+
+    @Transactional
+    public AuthResponse refreshToken(RefreshTokenRequest request) {
+
+        return refreshTokenService.findByToken(request.token())
+                .map(refreshTokenService::verifyExpiration)
+                .map(RefreshToken::getUser)
+                .map(user -> {
+                    final String accessToken = jwtService.generateToken(new CustomUserDetails(user));
+                    final RefreshToken newRefreshToken = refreshTokenService.getRefreshToken(user);
+                    return new AuthResponse(accessToken, newRefreshToken.getToken());
+                })
+                .orElseThrow(TokenNotFoundException::new);
     }
 
 }

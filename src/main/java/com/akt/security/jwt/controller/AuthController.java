@@ -2,6 +2,7 @@ package com.akt.security.jwt.controller;
 
 import com.akt.security.jwt.dto.AuthResponse;
 import com.akt.security.jwt.dto.LoginRequest;
+import com.akt.security.jwt.dto.RefreshTokenRequest;
 import com.akt.security.jwt.dto.RegisterRequest;
 import com.akt.security.jwt.security.AuthenticationService;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,11 @@ public class AuthController {
     @PostMapping("/login")
     public ResponseEntity<AuthResponse> login(@RequestBody LoginRequest loginRequest){
         return ResponseEntity.ok(authenticationService.login(loginRequest));
+    }
+
+    @PostMapping("/refresh")
+    public ResponseEntity<AuthResponse> refreshToken(@RequestBody RefreshTokenRequest refreshTokenRequest){
+        return ResponseEntity.ok(authenticationService.refreshToken(refreshTokenRequest));
     }
 
 }

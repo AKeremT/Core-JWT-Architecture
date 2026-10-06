@@ -1,0 +1,373 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>JPA @EntityGraph Rehberi ve Gerçek Hayat Hikayesi</title>
+    <style>
+        :root {
+            --bg-primary: #0f172a;
+            --bg-secondary: #1e293b;
+            --bg-card: #24344d;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent-blue: #38bdf8;
+            --accent-green: #34d399;
+            --accent-purple: #c084fc;
+            --accent-red: #f87171;
+            --accent-amber: #fbbf24;
+            --border-color: #334155;
+            --code-bg: #0b1120;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-main);
+            line-height: 1.65;
+            padding: 2.5rem 1rem;
+        }
+
+        .container {
+            max-width: 950px;
+            margin: 0 auto;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2.6rem;
+            font-weight: 800;
+            color: var(--accent-blue);
+            margin-bottom: 0.8rem;
+            letter-spacing: -0.025em;
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.15rem;
+        }
+
+        .badge {
+            display: inline-block;
+            background: rgba(56, 189, 248, 0.15);
+            color: var(--accent-blue);
+            padding: 0.35rem 0.85rem;
+            border-radius: 9999px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            border: 1px solid rgba(56, 189, 248, 0.3);
+        }
+
+        .card {
+            background-color: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 14px;
+            padding: 2rem;
+            margin-bottom: 2.5rem;
+            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+        }
+
+        h2 {
+            font-size: 1.7rem;
+            color: #fff;
+            margin-bottom: 1.2rem;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        h3 {
+            font-size: 1.25rem;
+            color: var(--accent-blue);
+            margin: 1.5rem 0 0.8rem;
+        }
+
+        p {
+            margin-bottom: 1rem;
+            color: #cbd5e1;
+        }
+
+        /* Hikaye Bölümü */
+        .story-box {
+            background: linear-gradient(145deg, #1e293b, #1e3a5f);
+            border-left: 5px solid var(--accent-purple);
+            padding: 1.75rem;
+            border-radius: 12px;
+            margin: 1.5rem 0;
+        }
+
+        .story-box h3 {
+            color: var(--accent-purple);
+            margin-top: 0;
+            font-size: 1.35rem;
+        }
+
+        .story-item {
+            margin-bottom: 1.25rem;
+            padding-left: 1rem;
+            border-left: 2px solid rgba(192, 132, 252, 0.3);
+        }
+
+        .story-item strong {
+            color: #fff;
+            display: block;
+            margin-bottom: 0.25rem;
+        }
+
+        /* Kod Blokları */
+        pre {
+            background-color: var(--code-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            padding: 1.2rem;
+            overflow-x: auto;
+            margin: 1rem 0 1.5rem;
+            font-size: 0.92rem;
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+        }
+
+        code {
+            color: #38bdf8;
+            font-family: inherit;
+        }
+
+        .inline-code {
+            background-color: var(--code-bg);
+            padding: 0.2rem 0.45rem;
+            border-radius: 6px;
+            color: var(--accent-blue);
+            font-size: 0.88rem;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        /* Alert Kutuları */
+        .alert {
+            padding: 1.2rem;
+            border-radius: 10px;
+            margin: 1.25rem 0;
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .alert-danger {
+            background: rgba(248, 113, 113, 0.1);
+            border: 1px solid rgba(248, 113, 113, 0.3);
+            color: #fca5a5;
+        }
+
+        .alert-success {
+            background: rgba(52, 211, 153, 0.1);
+            border: 1px solid rgba(52, 211, 153, 0.3);
+            color: #6ee7b7;
+        }
+
+        .alert-icon {
+            font-size: 1.5rem;
+            line-height: 1;
+        }
+
+        /* Tablo */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 1.5rem 0;
+            background-color: var(--code-bg);
+            border-radius: 10px;
+            overflow: hidden;
+            border: 1px solid var(--border-color);
+        }
+
+        th, td {
+            padding: 1rem 1.25rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        th {
+            background-color: rgba(255, 255, 255, 0.03);
+            color: var(--accent-blue);
+            font-weight: 600;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        footer {
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            margin-top: 3rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <span class="badge">Spring Boot & JPA Performans Rehberi</span>
+        <h1>@EntityGraph Nedir?</h1>
+        <p>Lazy Loading, N+1 Problemi, LazyInitializationException ve Tek Sorguda Optimum Performans</p>
+    </header>
+
+    <!-- 1. GERÇEK HAYAT HİKAYESİ -->
+    <div class="card">
+        <h2>☕ Gerçek Hayattan Bir Hikaye: "Kahve ve Şeker"</h2>
+        <p>JPA'daki ilişki yükleme (fetching) stratejilerini anlamak için bir kafeye gittiğinizi ve kahve siparişi verdiğinizi hayal edin:</p>
+
+        <div class="story-box">
+            <h3>🎭 Garsonun 3 Farklı Çalışma Şekli</h3>
+
+            <div class="story-item">
+                <strong>1. Aşırı Hevesli Garson (EAGER Fetching):</strong>
+                <p>Siz sadece bir fincan filtre kahve istersiniz. Garson masaya kahvenin yanında sormadan koca bir yaş pasta, kruvasan ve meyve tabağı da getirir. <em>"Belki yersiniz"</em> der. Masada yer kalmaz, gereksiz yere hesaba yük biner ve mutfak meşgul olur. (Gereksiz bellek ve CPU tüketimi).</p>
+            </div>
+
+            <div class="story-item">
+                <strong>2. Tembel Garson (LAZY Fetching - Standart Hal):</strong>
+                <p>Garson masaya sadece sade kahveyi getirir (Refresh Token). Şeker istediğinizde (User), garson mutfağa tekrar yürür ve şekeri getirir (2. SQL sorgusu).<br>
+                <strong>Fakat bir felaket senaryosu vardır:</strong> Garson ilk kahveyi bırakıp mutfağa döner dönmez kafe kapısını kilitler ve mutfak kapanır (<span class="inline-code">Session / Transaction closed</span>). Siz masada şekere elinizi uzattığınız an servis bulamazsınız ve siparişiniz yarım kalır: <span class="inline-code">LazyInitializationException</span>!</p>
+            </div>
+
+            <div class="story-item">
+                <strong>3. Akıllı ve Talimatlı Garson (@EntityGraph):</strong>
+                <p>Siz sipariş verirken garsona net bir talimat verirsiniz: <em>"Bana kahve getir ama mutfağa gitmişken şekeri de aynı tepsiye koyup tek seferde getir!"</em><br>
+                Garson mutfağa yalnızca <strong>1 defa gider</strong>, hem kahveyi hem şekeri aynı tepside (<span class="inline-code">SQL JOIN</span>) masaya getirir. Kafe kapısı kapansa bile şekeriniz önünüzdedir, keyifle kahvenizi içersiniz!</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- 2. TEKNİK ARKA PLAN -->
+    <div class="card">
+        <h2>🔍 Neden FetchType.LAZY Tanımladık?</h2>
+        <p>Projemizdeki <span class="inline-code">RefreshToken</span> entity'sinde ilişkiyi bilinçli olarak şöyle yazdık:</p>
+
+        <pre><code>@Entity
+@Table(name = "refresh_tokens")
+public class RefreshToken {
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
+    private User user;
+    
+    // ...
+}</code></pre>
+
+        <p><strong>Neden?</strong> Çünkü bir veritabanında süresi geçmiş refresh token'ları temizlerken veya sadece token ID'sini silerken arka plandaki devasa <span class="inline-code">User</span> tablosunu sorgulamak istemeyiz. LAZY, uygulamanın genel sağlığı için en güvenli varsayılandır.</p>
+    </div>
+
+    <!-- 3. @EntityGraph OLMASAYDI NE OLURDU? -->
+    <div class="card">
+        <h2>⚠️ @EntityGraph Olmazsa Karşılaşılacak 2 Büyük Tehlike</h2>
+
+        <div class="alert alert-danger">
+            <span class="alert-icon">💥</span>
+            <div>
+                <strong>Tehlike 1: LazyInitializationException (Uygulamanın Çökmesi)</strong><br>
+                <span class="inline-code">application.properties</span> dosyanızda <span class="inline-code">spring.jpa.open-in-view=false</span> tanımlı olduğu için, repository çağrısı bittiği an veritabanı bağlantısı kapanır.
+                Servis katmanında <span class="inline-code">refreshToken.getUser().getUsername()</span> dediğiniz anda açık bir session bulunamaz ve şu hata fırlar:
+                <br><em>org.hibernate.LazyInitializationException: could not initialize proxy [User#1] - no Session</em>
+            </div>
+        </div>
+
+        <div class="alert alert-danger">
+            <span class="alert-icon">🐢</span>
+            <div>
+                <strong>Tehlike 2: N+1 & Çift Sorgu Maliyeti</strong><br>
+                Transaction açık tutulsa bile Hibernate mecbur kalıp arka arkaya 2 ayrı SQL sorgusu gönderir:
+                <pre><code>-- 1. Token sorgulanır
+SELECT * FROM refresh_tokens WHERE token = ?;
+
+-- 2. İlişkili kullanıcı için veritabanına bir tur daha gidilir
+SELECT * FROM users WHERE id = ?;</code></pre>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. @EntityGraph İLE ÇÖZÜM -->
+    <div class="card">
+        <h2>⚡ @EntityGraph Çözümü: Nasıl Çalışır?</h2>
+        <p>Repository'deki metoda <span class="inline-code">@EntityGraph</span> eklediğimizde:</p>
+
+        <pre><code>@Repository
+public interface RefreshTokenRepository extends JpaRepository&lt;RefreshToken, Long&gt; {
+
+    @EntityGraph(attributePaths = {"user"})
+    Optional&lt;RefreshToken&gt; findByToken(String token);
+}</code></pre>
+
+        <p>Hibernate arka planda iki ayrı sorgu atmak yerine akıllı davranır ve tek bir SQL üretir:</p>
+
+        <pre><code>SELECT rt.id, rt.token, rt.expiry_date, rt.revoked, 
+       u.id AS user_id, u.username, u.email, u.password
+FROM refresh_tokens rt
+LEFT OUTER JOIN users u ON rt.user_id = u.id
+WHERE rt.token = ?;</code></pre>
+
+        <div class="alert alert-success">
+            <span class="alert-icon">✅</span>
+            <div>
+                <strong>Sonuç:</strong> Hem token hem de kullanıcı tek bir SQL <span class="inline-code">JOIN</span> ile aynı anda belleğe yüklenir. Veritabanına gereksiz network gidiş-gelişi (round-trip) yapılmaz ve oturum kapansa dahi kullanıcı nesnesine güvenle erişilir.
+            </div>
+        </div>
+    </div>
+
+    <!-- 5. ÖZET TABLO -->
+    <div class="card">
+        <h2>📊 Yöntemlerin Karşılaştırması</h2>
+
+        <table>
+            <thead>
+                <tr>
+                    <th>Strateji</th>
+                    <th>SQL Sorgu Sayısı</th>
+                    <th>LazyInitializationException Riski</th>
+                    <th>Esneklik / Genel Performans</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td><strong>EAGER</strong> (Entity'de)</td>
+                    <td>1 (JOIN)</td>
+                    <td>Yok</td>
+                    <td>❌ Kötü (Kullanıcı lazım olmasa bile her zaman zorla çeker)</td>
+                </tr>
+                <tr>
+                    <td><strong>LAZY</strong> (@EntityGraph Yok)</td>
+                    <td>2 (Ayrı SELECT'ler)</td>
+                    <td>⚠️ Yüksek (Session kapalıysa çöküş)</td>
+                    <td>⚠️ Orta (Gereksiz ekstra SQL yükü)</td>
+                </tr>
+                <tr>
+                    <td><strong>LAZY + @EntityGraph</strong></td>
+                    <td><strong>1 (JOIN)</strong></td>
+                    <td><strong>✅ Sıfır Risk</strong></td>
+                    <td><strong>🎯 Mükemmel (Sadece bu metoda özel Eager çeker)</strong></td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <footer>
+        <p>Core JWT Architecture © 2026 • Spring Boot 3/4 & JPA Performans Dokümantasyonu</p>
+    </footer>
+</div>
+
+</body>
+</html>
