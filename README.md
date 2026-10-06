@@ -1,28 +1,28 @@
 # Core JWT Architecture
 
-Spring Boot ve modern Spring Security ile geliştirilmiş, **saf stateless (Zero-DB Hit)** JWT kimlik doğrulama ve rol bazlı yetkilendirme mimarisi.
+A robust, production-ready, and **purely stateless (Zero-DB Hit)** JWT authentication and role-based authorization architecture built with **Spring Boot** and modern **Spring Security**.
 
-## 🚀 Öne Çıkan Özellikler
+## 🚀 Key Features
 
-- **Zero-DB Hit (Gerçek Stateless Mimari):** HTTP istekleri filtrelenirken token tek seferde parse edilir; kullanıcı adı ve yetkiler doğrudan token claim'lerinden inşa edilir. Her istekte veritabanına `SELECT` sorgusu atılmaz.
-- **Modern JJWT (0.12.x):** Güncel `io.jsonwebtoken` API'si (`verifyWith`, `parseSignedClaims`, `getPayload`) kullanılarak imzalama ve doğrulama işlemleri gerçekleştirilir.
-- **Composition over Inheritance:** `User` JPA entity'si Spring Security bağımlılıklarından temiz tutulmuş, `UserDetails` sözleşmesi ayrı bir `CustomUserDetails` wrapper sınıfı ile sağlanmıştır.
-- **REST API Uyumlu Hata Yönetimi:** Spring Security'nin varsayılan HTML yönlendirmeleri yerine `AuthenticationEntryPoint` (401) ve `AccessDeniedHandler` (403) ile özel JSON hata yanıtları döner.
-- **Modern Java:** Java 21 ve DTO'lar için immutable Java `record` yapıları.
-
----
-
-> ⚠️ **Önemli Not:**  
-> Bu proje bir öğrenme ve referans mimarisi projesidir. Kolay çalıştırılabilmesi ve pratik yapılabilmesi amacıyla `secret-key` ve veritabanı yapılandırmaları **kasıtlı olarak** `application.properties` dosyasına eklenmiştir. Bu durum bir güvenlik açığı değil, bilinçli bir eğitim tercihidir.
+- **Zero-DB Hit (True Stateless Architecture):** Incoming requests are validated in a single parse operation within the security filter. User identity and authorities are constructed directly from JWT claims without executing database queries (`SELECT`) on every HTTP request.
+- **Modern JJWT (0.12.x):** Fully utilizes the latest `io.jsonwebtoken` API (`verifyWith`, `parseSignedClaims`, `getPayload`), avoiding deprecated legacy patterns.
+- **Composition over Inheritance:** The domain `User` JPA entity is decoupled from framework-specific security contracts via a dedicated `CustomUserDetails` decorator.
+- **REST-Compliant Error Handling:** Custom JSON responses for `401 Unauthorized` (`AuthenticationEntryPoint`) and `403 Forbidden` (`AccessDeniedHandler`), replacing default Spring HTML redirect behaviors.
+- **Modern Java Standards:** Powered by Java 21, utilizing immutable Java `record` types for DTOs.
 
 ---
 
-## 🛠️ Endpoint'ler
+> ⚠️ **Disclaimer / Educational Notice:**  
+> This project is designed as an educational reference architecture. For ease of local setup and rapid testing, application secrets (e.g., `jwt.secret-key`) and database configurations are **intentionally included** in `application.properties`. This is a deliberate design choice for demonstration purposes and not an inadvertent vulnerability.
 
-| Metot | Endpoint | Yetki | Açıklama |
+---
+
+## 🛠️ Endpoints
+
+| HTTP Method | Endpoint | Access Level | Description |
 |---|---|---|---|
-| `POST` | `/api/auth/register` | Herkese Açık | Kullanıcı kaydı & token üretimi |
-| `POST` | `/api/auth/login` | Herkese Açık | Kullanıcı girişi & token üretimi |
-| `GET` | `/api/private` | Authenticated | Token sahibi tüm kullanıcılar |
-| `GET` | `/api/private/user` | `USER` veya `ADMIN` | Rol kısıtlamalı endpoint |
-| `GET` | `/api/private/admin` | `ADMIN` | Sadece admin erişimli endpoint |
+| `POST` | `/api/auth/register` | Public | Register a new user & receive JWT |
+| `POST` | `/api/auth/login` | Public | Authenticate credentials & receive JWT |
+| `GET` | `/api/private` | Authenticated | Accessible by any user with a valid token |
+| `GET` | `/api/private/user` | `USER` or `ADMIN` | Role-protected endpoint |
+| `GET` | `/api/private/admin` | `ADMIN` | Restricted to admin users only |
