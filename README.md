@@ -34,9 +34,3 @@ A robust, production-ready, and **purely stateless (Zero-DB Hit)** JWT authentic
 | `GET` | `/api/private` | Authenticated | Accessible by any user with a valid access token |
 | `GET` | `/api/private/user` | `USER` or `ADMIN` | Role-protected user endpoint |
 | `GET` | `/api/private/admin` | `ADMIN` | Restricted to admin users only |
-
----
-
-## 📚 Guides & Documentation
-- **[`jwt-architecture-master-guide.html`](jwt-architecture-master-guide.html):** Comprehensive end-to-end architecture and lifecycle master guide.
-- **[`entity-graph-guide.html`](entity-graph-guide.html):** Interactive visual guide explaining JPA `@EntityGraph`, Lazy Loading pitfalls, N+1 problems, and real-life analogies.
