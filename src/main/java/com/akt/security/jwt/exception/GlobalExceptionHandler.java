@@ -1,5 +1,6 @@
 package com.akt.security.jwt.exception;
 
+import io.jsonwebtoken.JwtException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.authentication.BadCredentialsException;
@@ -11,23 +12,27 @@ import java.util.Map;
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    @ExceptionHandler(UserAlreadyExistsException.class)
-    public ResponseEntity<Map<String, String>> userAlreadyExistsException(UserAlreadyExistsException e) {
-
-        return ResponseEntity.status(HttpStatus.CONFLICT)
-                .body(Map.of("error", "Conflict", "message", e.getMessage()));
+    @ExceptionHandler(BadCredentialsException.class)
+    public ResponseEntity<Map<String, String>> handleBadCredentialsException(BadCredentialsException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "unauthorized", "message", "Invalid username or password!"));
     }
 
-    @ExceptionHandler(BadCredentialsException.class)
-    public ResponseEntity<Map<String, String>> badCredentialsException(BadCredentialsException e) {
-
-        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized", "message", "Invalid username or password!"));
+    @ExceptionHandler(UserAlreadyExistsException.class)
+    public ResponseEntity<Map<String, String>> handleUserAlreadyExistsException(UserAlreadyExistsException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(Map.of("error", "conflict", "message", ex.getMessage()));
     }
 
     @ExceptionHandler(TokenNotFoundException.class)
-    public ResponseEntity<Map<String, String>> tokenNotFoundException(TokenNotFoundException e) {
+    public ResponseEntity<Map<String, String>> handleTokenNotFoundException(TokenNotFoundException ex) {
         return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
-                .body(Map.of("error", "Unauthorized", "message", e.getMessage()));
+                .body(Map.of("error", "unauthorized", "message", "Token not found!"));
     }
-}
+
+    @ExceptionHandler(JwtException.class)
+    public ResponseEntity<Map<String, String>> handleJwtException(JwtException ex) {
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
+                .body(Map.of("error", "unauthorized", "message", "Invalid token!"));
+    }
+ }

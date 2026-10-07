@@ -22,10 +22,10 @@ public class JwtService {
 
     public JwtService(JwtProperties jwtProperties) {
         this.jwtProperties = jwtProperties;
-        this.signingKey = buildSigningKey(jwtProperties);
+        this.signingKey = getSigningKey(jwtProperties);
     }
 
-    private static SecretKey buildSigningKey(JwtProperties jwtProperties){
+    private SecretKey getSigningKey(JwtProperties jwtProperties) {
 
         byte[] keyBytes = Decoders.BASE64.decode(jwtProperties.getSecretKey());
         return Keys.hmacShaKeyFor(keyBytes);
@@ -61,7 +61,7 @@ public class JwtService {
             return List.of();
         }
         return roles.stream()
-                .map(Objects::toString)
+                .map(Object::toString)
                 .toList();
     }
 
@@ -78,4 +78,5 @@ public class JwtService {
             return Optional.empty();
         }
     }
+
 }

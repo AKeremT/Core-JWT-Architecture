@@ -5,7 +5,7 @@ public class TokenNotFoundException extends RuntimeException {
         super(message);
     }
 
-    public TokenNotFoundException(){
+    public TokenNotFoundException() {
         super("Token not found!");
     }
 }

@@ -1,7 +1,6 @@
 package com.akt.security.jwt.security;
 
 import com.akt.security.jwt.config.JwtProperties;
-import com.akt.security.jwt.exception.TokenNotFoundException;
 import com.akt.security.jwt.model.RefreshToken;
 import com.akt.security.jwt.model.User;
 import com.akt.security.jwt.repository.RefreshTokenRepository;
@@ -10,7 +9,6 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Date;
 import java.time.Instant;
 import java.util.Optional;
 import java.util.UUID;
@@ -36,18 +34,16 @@ public class RefreshTokenService {
                 .user(user)
                 .expiryDate(expiration)
                 .build();
-
         return refreshTokenRepository.save(refreshToken);
     }
 
-    public RefreshToken verifyExpiration(RefreshToken refreshToken) {
+    public RefreshToken verifyRefreshToken(RefreshToken refreshToken) {
 
         if (refreshToken.isRevoked() || refreshToken.getExpiryDate().isBefore(Instant.now())) {
 
             refreshTokenRepository.delete(refreshToken);
-            throw new JwtException("Refresh token expired");
+            throw new JwtException("Refresh token has expired");
         }
-
         return refreshToken;
     }
 
@@ -56,6 +52,7 @@ public class RefreshTokenService {
         if (token == null || token.isEmpty()) {
             return Optional.empty();
         }
+
         return refreshTokenRepository.findByToken(token);
     }
 }

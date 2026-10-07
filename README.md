@@ -5,14 +5,16 @@ A robust, production-ready, and **purely stateless (Zero-DB Hit)** JWT authentic
 ## 🚀 Key Features
 
 - **Zero-DB Hit (True Stateless Access Tokens):** Incoming requests are validated in a single parse operation within the security filter. User identity and authorities are constructed directly from JWT claims without executing database queries (`SELECT`) on every HTTP request.
+- **Type-Safe Stateless Principal (`CustomUserDetails`):** Unlike naive implementations that insert Spring Security's generic `User` into the security context, `JwtAuthenticationFilter` reconstructs the domain `CustomUserDetails` decorator directly from token claims. This allows seamless `@AuthenticationPrincipal CustomUserDetails` injection across controller endpoints without `ClassCastException` or database lookups.
 - **Dual-Token Architecture:** 
   - **Access Token:** Short-lived (`15m`), stateless, signed JWT for API authorization.
   - **Refresh Token:** Long-lived (`7d`), opaque (`UUID`), stored in the database for issuing new access tokens.
 - **Refresh Token Rotation (RTR):** Follows the **OWASP Gold Standard**; every refresh operation revokes/deletes the old refresh token and issues a new pair, preventing replay and token hijacking attacks.
-- **JPA `@EntityGraph` Optimization:** Leverages `@EntityGraph(attributePaths = {"user"})` to eagerly fetch the associated `User` with a single SQL `JOIN`, eliminating N+1 queries and avoiding `LazyInitializationException`.
+- **JPA `@EntityGraph` Optimization:** Leverages `@EntityGraph(attributePaths = {"user"})` in `RefreshTokenRepository` to eagerly fetch the associated `User` with a single SQL `JOIN`, eliminating N+1 queries and avoiding `LazyInitializationException`.
 - **Modern JJWT (0.12.x):** Fully utilizes the latest `io.jsonwebtoken` API (`verifyWith`, `parseSignedClaims`, `getPayload`), avoiding deprecated legacy patterns.
 - **Composition over Inheritance:** The domain `User` JPA entity is decoupled from framework-specific security contracts via a dedicated `CustomUserDetails` decorator.
-- **REST-Compliant Error Handling:** Custom JSON responses for `401 Unauthorized` (`AuthenticationEntryPoint`), `403 Forbidden` (`AccessDeniedHandler`), `409 Conflict`, and `BadCredentialsException`.
+- **REST-Compliant Error Handling:** Custom JSON responses for `401 Unauthorized` (`AuthenticationEntryPoint` & `JwtException`), `403 Forbidden` (`AccessDeniedHandler`), `409 Conflict`, and `BadCredentialsException`.
+- **Containerized Environment:** Pre-configured `docker-compose.yml` for rapid PostgreSQL 16 local setup.
 - **Modern Java Standards:** Powered by Java 21, utilizing immutable Java `record` types for DTOs.
 
 ---
@@ -36,4 +38,5 @@ A robust, production-ready, and **purely stateless (Zero-DB Hit)** JWT authentic
 ---
 
 ## 📚 Guides & Documentation
+- **[`jwt-architecture-master-guide.html`](jwt-architecture-master-guide.html):** Comprehensive end-to-end architecture and lifecycle master guide.
 - **[`entity-graph-guide.html`](entity-graph-guide.html):** Interactive visual guide explaining JPA `@EntityGraph`, Lazy Loading pitfalls, N+1 problems, and real-life analogies.

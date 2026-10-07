@@ -46,22 +46,22 @@ public class SecurityConfig {
     }
 
     @Bean
-    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) throws Exception {
+    public AuthenticationManager authenticationManager(AuthenticationConfiguration configuration) {
         return configuration.getAuthenticationManager();
     }
 
     @Bean
     public CorsConfigurationSource corsConfigurationSource() {
 
-        CorsConfiguration corsConfiguration = new CorsConfiguration();
-        corsConfiguration.setAllowedOriginPatterns(List.of("*"));
-        corsConfiguration.setAllowedMethods(List.of("*"));
-        corsConfiguration.setAllowedHeaders(List.of("*"));
-        corsConfiguration.setExposedHeaders(List.of("*"));
-        corsConfiguration.setAllowCredentials(true);
-        UrlBasedCorsConfigurationSource url = new UrlBasedCorsConfigurationSource();
-        url.registerCorsConfiguration("/**", corsConfiguration);
-        return url;
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOriginPatterns(List.of("http://localhost:4200"));
+        configuration.setAllowedMethods(List.of("*"));
+        configuration.setAllowedHeaders(List.of("*"));
+        configuration.setAllowCredentials(true);
+        configuration.setExposedHeaders(List.of("*"));
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     @Bean
@@ -71,15 +71,15 @@ public class SecurityConfig {
                 .csrf(AbstractHttpConfigurer::disable)
                 .cors(Customizer.withDefaults())
                 .exceptionHandling(ex -> ex
-                        .authenticationEntryPoint((request, response, authException) -> {
-                            response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"unauthorized\", \"error_description\": \"Unauthorized Access\"}");
+                        .authenticationEntryPoint((req, resp, e) -> {
+                            resp.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+                            resp.setContentType("application/json");
+                            resp.getWriter().write("{\"error\": \"Unauthorized\", \"message\": \"Unauthorized Access\"}");
                         })
-                        .accessDeniedHandler((request, response, accessDeniedException) -> {
-                            response.setStatus(HttpServletResponse.SC_FORBIDDEN);
-                            response.setContentType("application/json");
-                            response.getWriter().write("{\"error\": \"forbidden\", \"error_description\": \"Forbidden Access\"}");
+                        .accessDeniedHandler((req, resp, e) -> {
+                            resp.setStatus(HttpServletResponse.SC_FORBIDDEN);
+                            resp.setContentType("application/json");
+                            resp.getWriter().write("{\"error\": \"Forbidden\", \"message\": \"Forbidden Access\"}");
                         }))
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/api/auth", "/api/auth/**").permitAll()

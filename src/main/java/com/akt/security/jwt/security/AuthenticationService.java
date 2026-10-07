@@ -25,8 +25,8 @@ import java.util.Set;
 @RequiredArgsConstructor
 public class AuthenticationService {
 
-    private final JwtService jwtService;
     private final UserRepository userRepository;
+    private final JwtService jwtService;
     private final PasswordEncoder passwordEncoder;
     private final AuthenticationManager authenticationManager;
     private final RefreshTokenService refreshTokenService;
@@ -43,31 +43,29 @@ public class AuthenticationService {
                 .email(registerRequest.email())
                 .roles(Set.of(Role.USER))
                 .build();
-
         User savedUser = userRepository.save(user);
 
-        final String token = jwtService.generateToken(new CustomUserDetails(savedUser));
-        final RefreshToken refreshToken = refreshTokenService.getRefreshToken(savedUser);
+        String token = jwtService.generateToken(new CustomUserDetails(savedUser));
+        RefreshToken refreshToken = refreshTokenService.getRefreshToken(savedUser);
         return new AuthResponse(token, refreshToken.getToken());
     }
 
     public AuthResponse login(LoginRequest loginRequest) {
 
-        var auth = authenticationManager.authenticate(
+        var authUser = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(loginRequest.username(), loginRequest.password()));
 
-        CustomUserDetails customUserDetails = (CustomUserDetails) Objects.requireNonNull(auth.getPrincipal());
-
-        final String token = jwtService.generateToken(customUserDetails);
-        final RefreshToken refreshToken = refreshTokenService.getRefreshToken(customUserDetails.getUser());
+        CustomUserDetails user = (CustomUserDetails) Objects.requireNonNull(authUser.getPrincipal());
+        String token = jwtService.generateToken(user);
+        RefreshToken refreshToken = refreshTokenService.getRefreshToken(user.getUser());
         return new AuthResponse(token, refreshToken.getToken());
     }
 
     @Transactional
-    public AuthResponse refreshToken(RefreshTokenRequest request) {
+    public AuthResponse refreshToken(RefreshTokenRequest refreshTokenRequest) {
 
-        return refreshTokenService.findByToken(request.token())
-                .map(refreshTokenService::verifyExpiration)
+        return refreshTokenService.findByToken(refreshTokenRequest.token())
+                .map(refreshTokenService::verifyRefreshToken)
                 .map(RefreshToken::getUser)
                 .map(user -> {
                     final String accessToken = jwtService.generateToken(new CustomUserDetails(user));
@@ -76,5 +74,4 @@ public class AuthenticationService {
                 })
                 .orElseThrow(TokenNotFoundException::new);
     }
-
 }
